@@ -1,1 +1,2 @@
 # SQL-queries
+In this SQL project I have performed various operations related to managing a library database, including creating tables, inserting data, updating records, and querying information. Overall, the SQL code covers a range of database management tasks, including data manipulation, retrieval, aggregation, and analysis, demonstrating the versatility and power of SQL for managing relational databases.
