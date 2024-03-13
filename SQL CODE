@@ -1,0 +1,179 @@
+create table Book (
+call_no int PRIMARY KEY,
+title varchar(50),
+subject varchar(30))
+
+create table Patron(
+patron_id int PRIMARY KEY,
+first_name varchar(50),
+last_name varchar(50),
+dob date)
+
+create table Address(
+address_id int PRIMARY KEY,
+address varchar(75),
+patron_id int)
+
+create table Loan_trans1(
+trans_id int PRIMARY KEY,
+patron_id int,
+call_no int,
+loan_fee int,
+loan_fee_paid varchar(5),
+date_checked_out date,
+date_returned date)
+
+
+
+alter table Patron
+add email varchar(30)
+
+select patron_id,first_name,last_name,dob,email,age from
+(select patron_id,first_name,last_name,dob,email,date()-date(dob) AS age from Patron)
+where age>50
+
+create table Seniors(
+patron_id int PRIMARY KEY,
+first_name varchar(50),
+last_name varchar(50),
+dob date,
+email varchar(30))
+
+alter table Seniors
+add age int
+
+insert into Seniors (patron_id,first_name,last_name,dob,email,age)
+select patron_id,first_name,last_name,dob,email,age from
+(select patron_id,first_name,last_name,dob,email,date()-date(dob) as age from Patron)
+where age>50
+
+Update Patron
+set email="sql4life@books.com"
+where patron_id=101
+
+select title,subject from Book
+order by subject asc
+
+select distinct(subject) from Book
+order by subject asc
+
+select title,subject from Book
+where subject="Advertising"
+order by subject asc
+
+select title,subject from Book
+where call_no=2000
+
+select*from Loan_trans1 
+where loan_fee>5
+order by patron_id
+
+select call_no from Loan_trans1
+where (patron_id = 140 and loan_fee_paid = 'yes')
+
+select title from Book
+where title like '%Database%'
+order by title
+
+select title from Book
+where title like '_r%'
+order by title
+
+select call_no,title from Book
+where call_no between 800 and 1300
+order by call_no
+
+select patron_id,trans_id,call_no,date_returned from Loan_trans1
+where date_returned ='null'
+order by call_no
+
+select patron_id,first_name,last_name,date_returned,loan_fee_paid
+from Loan_trans1 b
+Right join Patron p
+on b.patron_id - p.patron_id
+where (b.date_returned !='null' and b.loan_fee_paid='yes')
+order by p.patron_id
+
+select patron_id,first_name,last_name
+from Patron
+where patron_id in (127,124,137,114)
+order by first_name
+
+select title,subject from Book
+where subject in ('Computing','Literature')
+order by title
+
+select patron_id,first_name,last_name,dob from Patron
+where dob between '1990-01-01' and '2020-12-31'
+order by dob
+
+select count(date_returned) from Loan_trans1
+where date_returned='null'
+
+select sum(loan_fee) from Loan_trans1
+
+select avg(loan_fee) from Loan_trans1
+
+select count(call_no) as no_of_books_late,
+JULIANDAY(date_returned) - JULIANDAY(date_checked_out) as no_of_days
+from Loan_trans1
+where (no_of_days > 10 and no_of_days is not null)
+group by call_no
+
+select patron_id,call_no,loan_fee_paid,
+JULIANDAY(date_returned) - JULIANDAY(date_checked_out) as no_of_days from Loan_trans1
+where (no_of_days > 10 and no_of_days is not null)
+group by call_no
+
+select a.patron_id,a.call_no,a.loan_fee_paid,a.no_of_days,a.loan_fee + (a.no_of_days*5) as amount_owed
+from(
+select patron_id,call_no,loan_fee,loan_fee_paid,JULIANDAY(date_returned) - JULIANDAY(date_checked_out) as no_of_days
+from loan_trans1
+)a
+where (no_of_days > 10 and no_of_days is not null and loan_fee_paid = 'no')
+
+select title,subject from Book
+order by title
+
+select subject,title,call_no from book
+order by subject,call_no
+
+select a.patron_id,a.call_no,a.loan_fee + (a.no_of_days*5) as total_fine
+from(
+select patron_id,call_no,loan_fee,loan_fee_paid,JULIANDAY(date_returned) - JULIANDAY(date_checked_out) as no_of_days
+from Loan_trans1
+)a
+where (no_of_days > 10 and no_of_days is not null and loan_fee_paid = 'no')
+group by patron_id
+
+select strftime('%m',date_checked_out) as month, count(*) as no_of_checkouts from Loan_trans1
+where date_checked_out between '2021-01-01' and '2021-12-31'
+group by month
+order by month
+
+select l.subject, count(b.call_no) as tot_books_on_loan from Loan_trans1 b
+left join Book l 
+on b.call_no - l.call_no
+where b.date_returned - 'null'
+group by l.subject
+
+select p.patron_id,p.first_name,p.last_name,b.call_no
+from Patron p
+left join Loan_trans1 b
+on p.patron_id = b.patron_id
+where date_checked_out is not null
+order by p.patron_id
+
+create table temp_table1 as 
+Select a.patron_id,a.call_no,a.loan_fee,a.loan_fee_paid,a.no_of_days,a.loan_fee + (a.no_of_days*5) as amount_owed
+from
+(
+SELECT
+  patron_id,call_no,loan_fee,loan_fee_paid,
+  JULIANDAY(date_returned)- JULIANDAY(date_checked_out) as no_of_days
+  from Loan_trans1
+  )a
+where (no_of_days > 10 and no_of_days IS NOT NULL and loan_fee_paid='no')
+select p.patron_id,p.first_name,p.last_name,t.amount_owed from Patron p
+Join temp_table1 t
+on p.patron_id - t.patron_id;
